@@ -73,9 +73,14 @@ npm run dev:api  # checkout API on http://localhost:8787 (the dev site proxies /
 1. In the Stripe dashboard (test mode), create a restricted key with **Checkout Sessions: Write** permission. A standard `sk_test_` key also works.
 2. Store it in AWS SSM Parameter Store. It is read by the Lambda at runtime and never stored in Terraform state or the repo:
 
+   Run these lines one at a time. Paste the key at the prompt (it won't be shown) and press Enter:
+
    ```sh
-   read -rs STRIPE_KEY && aws --profile default --region eu-west-2 ssm put-parameter \
-     --name /cakesite/stripe_secret_key --type SecureString --overwrite --value "$STRIPE_KEY"; unset STRIPE_KEY
+   printf 'Stripe secret key: '; read -rs STRIPE_KEY; echo
+   [ -n "$STRIPE_KEY" ] && aws --profile default --region eu-west-2 ssm put-parameter \
+     --name /cakesite/stripe_secret_key --type SecureString --overwrite --value "$STRIPE_KEY" \
+     || echo "No key entered, nothing stored."
+   unset STRIPE_KEY
    ```
 
 3. In Stripe, turn on **Settings → Emails → Successful payments** for customer receipts (Stripe doesn't send these in test mode), and turn on email notifications for successful payments under your user's notification settings.
