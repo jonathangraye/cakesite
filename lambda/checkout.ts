@@ -59,7 +59,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     return json(200, { url: session.url });
   } catch (err) {
     // Log the reason only: order details include the customer's postcode and notes.
-    console.error('checkout_failed:', err instanceof Error ? err.message : String(err));
+    const e = err as { type?: string; code?: string; message?: string; detail?: { code?: string; message?: string } };
+    console.error('checkout_failed:', e.type ?? 'Error', e.code ?? e.detail?.code ?? '', e.message ?? String(err), e.detail?.message ?? '');
     return json(500, { errors: ["We couldn't start payment. Please try again in a moment."] });
   }
 }

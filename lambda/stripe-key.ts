@@ -19,7 +19,8 @@ async function readParameter(name: string | undefined): Promise<string> {
 export async function loadStripeKey(env: Env = process.env): Promise<string> {
   const mode = env.STRIPE_MODE ?? 'test';
   if (mode !== 'test' && mode !== 'live') throw new Error(`STRIPE_MODE must be "test" or "live", got "${mode}"`);
-  const key = env.STRIPE_SECRET_KEY || (await readParameter(env.STRIPE_SECRET_PARAM));
+  // A trailing newline from copy-paste or a file makes Stripe fail with a misleading connection error.
+  const key = (env.STRIPE_SECRET_KEY || (await readParameter(env.STRIPE_SECRET_PARAM))).trim();
   if (!KEY_PATTERNS[mode].test(key)) throw new Error(`The Stripe key is not a ${mode} key (STRIPE_MODE=${mode})`);
   return key;
 }
