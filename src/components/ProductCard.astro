@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { formatGBP, toPence } from '../lib/catalog';
-import DietaryBadges from './DietaryBadges.astro';
+import { DIETARY_LABELS } from '../lib/menu-options';
 
 interface Props {
   item: CollectionEntry<'menu'>;
@@ -17,12 +17,17 @@ const priceLabel = prices.length > 1 ? `From ${formatGBP(min)}` : formatGBP(min)
 
 <article class="card">
   <a href={`/menu/${item.id}/`} class="card-link">
-    <Image src={d.image} alt={d.imageAlt} width={480} height={360} class="card-image" />
+    <div class="card-media">
+      <Image src={d.image} alt={d.imageAlt} width={640} class="card-image" />
+      {!d.available && <span class="card-flag">Unavailable</span>}
+    </div>
     <div class="card-body">
       <h3>{d.name}</h3>
-      <p>{d.summary}</p>
-      <p class="price">{d.available ? priceLabel : 'Currently unavailable'}</p>
-      <DietaryBadges dietary={d.dietary} />
+      <p class="card-summary">{d.summary}</p>
+      <p class="card-meta">
+        <span class="price">{d.available ? priceLabel : 'Currently unavailable'}</span>
+        {d.dietary.length > 0 && <span class="card-diet">{d.dietary.map((x) => DIETARY_LABELS[x]).join(' · ')}</span>}
+      </p>
     </div>
   </a>
 </article>

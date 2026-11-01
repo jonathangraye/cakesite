@@ -3,8 +3,10 @@ import { Image } from 'astro:assets';
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import DietaryBadges from '../../components/DietaryBadges.astro';
+import Icon from '../../components/Icon.astro';
 import { formatGBP, toPence } from '../../lib/catalog';
 import { ALLERGEN_LABELS, CATEGORY_LABELS } from '../../lib/menu-options';
+import { deliveryDaysRange } from '../../lib/order-rules';
 import rules from '../../data/delivery.json';
 
 export async function getStaticPaths() {
@@ -21,14 +23,27 @@ const d = item.data;
 const { Content } = await render(item);
 const noticeDays = Math.max(d.leadTimeDays, rules.minLeadDays);
 const list = (keys: (keyof typeof ALLERGEN_LABELS)[]) => keys.map((k) => ALLERGEN_LABELS[k]).join(', ');
+const prices = d.variants.map((v) => toPence(v.price));
+const min = Math.min(...prices);
+const priceLabel = prices.length > 1 ? `From ${formatGBP(min)}` : formatGBP(min);
 ---
 
 <Base title={d.name} description={d.summary}>
-  <p class="crumbs"><a href="/menu/">Menu</a> / <a href={`/menu/#${d.category}`}>{CATEGORY_LABELS[d.category]}</a></p>
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="/menu/">Menu</a>
+    <span aria-hidden="true">/</span>
+    <a href={`/menu/#${d.category}`}>{CATEGORY_LABELS[d.category]}</a>
+  </nav>
+
   <div class="product">
-    <Image src={d.image} alt={d.imageAlt} width={800} height={600} loading="eager" class="product-image" />
-    <div>
+    <div class="product-media">
+      <Image src={d.image} alt={d.imageAlt} width={1000} loading="eager" class="product-image" />
+    </div>
+
+    <div class="product-info">
+      <p class="eyebrow">{CATEGORY_LABELS[d.category]}</p>
       <h1>{d.name}</h1>
+      <p class="product-price">{d.available ? priceLabel : 'Currently unavailable'}</p>
       <p class="lead">{d.summary}</p>
       <DietaryBadges dietary={d.dietary} />
 
@@ -37,19 +52,37 @@ const list = (keys: (keyof typeof ALLERGEN_LABELS)[]) => keys.map((k) => ALLERGE
           <form class="add-form" data-add-form data-item-id={item.id} data-max-qty={rules.maxQuantityPerLine}>
             <fieldset>
               <legend>Choose an option</legend>
-              {d.variants.map((v, i) => (
-                <label class="variant">
-                  <input type="radio" name="variant" value={v.id} checked={i === 0} required />
-                  <span>{v.label}</span>
-                  <span class="price">{formatGBP(toPence(v.price))}</span>
-                </label>
-              ))}
+              <div class="variants">
+                {d.variants.map((v, i) => (
+                  <label class="variant">
+                    <input type="radio" name="variant" value={v.id} checked={i === 0} required />
+                    <span class="variant-label">{v.label}</span>
+                    <span class="price">{formatGBP(toPence(v.price))}</span>
+                  </label>
+                ))}
+              </div>
             </fieldset>
-            <label class="qty">
-              Quantity
-              <input type="number" name="qty" min="1" max={rules.maxQuantityPerLine} value="1" required />
-            </label>
-            <button type="submit" class="button">Add to basket</button>
+            <div class="add-row">
+              <div class="stepper">
+                <button type="button" data-step="-1" aria-label="Decrease quantity">
+                  <Icon name="minus" size={18} />
+                </button>
+                <input
+                  id="qty"
+                  type="number"
+                  name="qty"
+                  min="1"
+                  max={rules.maxQuantityPerLine}
+                  value="1"
+                  required
+                  aria-label="Quantity"
+                />
+                <button type="button" data-step="1" aria-label="Increase quantity">
+                  <Icon name="plus" size={18} />
+                </button>
+              </div>
+              <button type="submit" class="button add-button">Add to basket</button>
+            </div>
             <p class="form-status" role="status" data-status></p>
           </form>
         ) : (
@@ -57,22 +90,33 @@ const list = (keys: (keyof typeof ALLERGEN_LABELS)[]) => keys.map((k) => ALLERGE
         )
       }
 
-      <p class="muted">Please order at least {noticeDays} days before your delivery date.</p>
+      <ul class="facts">
+        <li><Icon name="clock" /> Order at least {noticeDays} days before your delivery date</li>
+        <li>
+          <Icon name="truck" /> Local delivery, {deliveryDaysRange(rules)}. <a href="/delivery/">Areas and fees</a>
+        </li>
+        <li><Icon name="leaf" /> 100% plant-based</li>
+      </ul>
 
       <div class="prose"><Content /></div>
 
-      <h2>Ingredients</h2>
-      <p>{d.ingredients}</p>
-
-      <h2>Allergens</h2>
-      {
-        d.allergens.length > 0 ? (
-          <p>Contains: <strong>{list(d.allergens)}</strong>.</p>
-        ) : (
-          <p>Contains none of the 14 major allergens.</p>
-        )
-      }
-      {d.mayContain.length > 0 && <p>May contain: {list(d.mayContain)}.</p>}
+      <details class="accordion" open>
+        <summary>Allergens</summary>
+        {
+          d.allergens.length > 0 ? (
+            <p>
+              Contains: <strong>{list(d.allergens)}</strong>.
+            </p>
+          ) : (
+            <p>Contains none of the 14 major allergens.</p>
+          )
+        }
+        {d.mayContain.length > 0 && <p>May contain: {list(d.mayContain)}.</p>}
+      </details>
+      <details class="accordion">
+        <summary>Ingredients</summary>
+        <p>{d.ingredients}</p>
+      </details>
     </div>
   </div>
 </Base>
@@ -82,10 +126,20 @@ const list = (keys: (keyof typeof ALLERGEN_LABELS)[]) => keys.map((k) => ALLERGE
 
   for (const form of document.querySelectorAll<HTMLFormElement>('[data-add-form]')) {
     const status = form.querySelector<HTMLElement>('[data-status]');
+    const qtyInput = form.querySelector<HTMLInputElement>('input[name="qty"]');
+    const max = Number(form.dataset.maxQty);
+
+    for (const button of form.querySelectorAll<HTMLButtonElement>('[data-step]')) {
+      button.addEventListener('click', () => {
+        if (!qtyInput) return;
+        const next = (Math.trunc(Number(qtyInput.value)) || 1) + Number(button.dataset.step);
+        qtyInput.value = String(Math.min(max, Math.max(1, next)));
+      });
+    }
+
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       const data = new FormData(form);
-      const max = Number(form.dataset.maxQty);
       const qty = Math.trunc(Number(data.get('qty')));
       if (!Number.isFinite(qty) || qty < 1) return;
       addToBasket(form.dataset.itemId as string, String(data.get('variant')), qty, max);

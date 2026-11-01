@@ -1,9 +1,13 @@
 ---
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 import ProductCard from '../components/ProductCard.astro';
+import TrustStrip from '../components/TrustStrip.astro';
 import { site } from '../site';
 import rules from '../data/delivery.json';
+import { formatGBP } from '../lib/catalog';
 import { deliveryDaysSentence } from '../lib/order-rules';
 
 const items = (await getCollection('menu', (i) => i.data.available)).sort(
@@ -11,35 +15,80 @@ const items = (await getCollection('menu', (i) => i.data.available)).sort(
 );
 const featured = items.filter((i) => i.data.featured);
 const shown = (featured.length > 0 ? featured : items).slice(0, 3);
+const hero = shown[0];
 ---
 
 <Base>
-  <section class="hero">
-    <h1>Plant-based bakes, made to order</h1>
-    <p class="lead">{site.tagline}</p>
-    <a class="button" href="/menu/">See the menu</a>
+  <section class="bleed hero-band">
+    <div class="wrap hero">
+      <div class="hero-text">
+        <p class="eyebrow">100% plant-based bakery</p>
+        <h1 class="display">Plant-based bakes, <em>made to order</em></h1>
+        <p class="lead">{site.tagline}</p>
+        <div class="actions">
+          <a class="button" href="/menu/">See the menu</a>
+          <a class="arrow-link" href="/delivery/">Delivery areas <Icon name="arrow" size={18} /></a>
+        </div>
+      </div>
+      {
+        hero && (
+          <a class="hero-media" href={`/menu/${hero.id}/`}>
+            <Image src={hero.data.image} alt={hero.data.imageAlt} width={960} loading="eager" />
+            <span class="hero-tag">
+              <span class="hero-tag-label">Customer favourite</span>
+              {hero.data.name}
+            </span>
+          </a>
+        )
+      }
+    </div>
   </section>
+
+  <TrustStrip />
 
   {
     shown.length > 0 && (
-      <section>
-        <h2>Customer favourites</h2>
-        <div class="grid">
+      <section class="section">
+        <header class="section-head">
+          <p class="eyebrow">From the menu</p>
+          <h2>Customer favourites</h2>
+        </header>
+        <div class="grid grid-feature">
           {shown.map((item) => (
             <ProductCard item={item} />
           ))}
         </div>
+        <p class="section-foot">
+          <a class="arrow-link" href="/menu/">See the full menu <Icon name="arrow" size={18} /></a>
+        </p>
       </section>
     )
   }
 
-  <section class="steps">
-    <h2>How ordering works</h2>
-    <ol>
-      <li><strong>Choose your bakes</strong> from the menu and add them to your basket.</li>
-      <li><strong>Check your postcode</strong> and pick a preferred delivery date.</li>
-      <li><strong>Pay securely</strong> with Stripe. Your receipt arrives by email.</li>
-    </ol>
-    <p>{deliveryDaysSentence(rules)} <a href="/delivery/">Delivery areas and fees</a>.</p>
+  <section class="bleed band">
+    <div class="wrap section">
+      <header class="section-head">
+        <p class="eyebrow">Simple and secure</p>
+        <h2>How ordering works</h2>
+      </header>
+      <ol class="steps">
+        <li>
+          <h3>Choose your bakes</h3>
+          <p>Pick from the menu and add them to your basket.</p>
+        </li>
+        <li>
+          <h3>Check your postcode</h3>
+          <p>Make sure we deliver to you and pick a preferred delivery date.</p>
+        </li>
+        <li>
+          <h3>Pay securely</h3>
+          <p>Checkout is handled by Stripe. Your receipt arrives by email.</p>
+        </li>
+      </ol>
+      <p class="section-foot muted">
+        {deliveryDaysSentence(rules)} Minimum order {formatGBP(rules.minOrderPence)}.{' '}
+        <a href="/delivery/">Delivery areas and fees</a>.
+      </p>
+    </div>
   </section>
 </Base>

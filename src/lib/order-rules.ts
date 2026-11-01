@@ -111,6 +111,15 @@ export function deliveryDaysSentence(rules: DeliveryRules): string {
   return `We deliver on ${new Intl.ListFormat('en-GB', { type: 'conjunction' }).format(names)}.`;
 }
 
+/** A short form for headings and banners, e.g. "Tuesday to Saturday" or "Fridays and Saturdays". */
+export function deliveryDaysRange(rules: DeliveryRules): string {
+  const days = [...new Set(rules.deliveryWeekdays)].sort((a, b) => a - b);
+  if (days.length === 7) return 'every day';
+  const contiguous = days.length >= 3 && days.every((d, i) => i === 0 || d === days[i - 1] + 1);
+  if (contiguous) return `${weekdayName(days[0])} to ${weekdayName(days[days.length - 1])}`;
+  return new Intl.ListFormat('en-GB', { type: 'conjunction' }).format(days.map((d) => `${weekdayName(d)}s`));
+}
+
 export function basketLeadTime(itemIds: string[], catalog: Catalog): number {
   return itemIds.reduce((max, id) => Math.max(max, catalog.items[id]?.leadTimeDays ?? 0), 0);
 }

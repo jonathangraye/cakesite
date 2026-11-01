@@ -122,7 +122,9 @@ async function main() {
         li.className = 'basket-line';
 
         const info = document.createElement('div');
+        info.className = 'line-info';
         const name = document.createElement('a');
+        name.className = 'line-name';
         name.href = l.item.url;
         name.textContent = l.item.name;
         const variant = document.createElement('p');
@@ -135,6 +137,7 @@ async function main() {
         qty.min = '1';
         qty.max = String(rules.maxQuantityPerLine);
         qty.value = String(l.qty);
+        qty.className = 'line-qty';
         qty.setAttribute('aria-label', `Quantity of ${l.item.name}, ${l.v.label}`);
         qty.addEventListener('change', () => {
           const n = Math.min(rules.maxQuantityPerLine, Math.max(1, Math.trunc(Number(qty.value)) || 1));
@@ -146,7 +149,7 @@ async function main() {
 
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'link-button';
+        remove.className = 'link-button line-remove';
         remove.textContent = 'Remove';
         remove.addEventListener('click', () => {
           writeBasket(readBasket().filter((b) => !(b.id === l.id && b.variant === l.variant)));

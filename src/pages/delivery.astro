@@ -1,46 +1,72 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 import rules from '../data/delivery.json';
 import { formatGBP } from '../lib/catalog';
-import { deliveryDaysSentence, formatDeliveryDate } from '../lib/order-rules';
+import { deliveryDaysRange, formatDeliveryDate } from '../lib/order-rules';
 ---
 
 <Base title="Delivery" description="Where we deliver, delivery fees and how much notice we need.">
-  <h1>Delivery</h1>
-  <p class="lead">We bake every order fresh and deliver it ourselves.</p>
-  <ul>
-    <li>{deliveryDaysSentence(rules)}</li>
-    <li>Please order at least {rules.minLeadDays} days ahead. Some items need more notice, shown on their menu page.</li>
-    <li>You can order up to {rules.maxAdvanceDays} days ahead.</li>
-    <li>The minimum order is {formatGBP(rules.minOrderPence)} before delivery.</li>
+  <header class="page-head">
+    <p class="eyebrow">Delivery</p>
+    <h1>Where and when we deliver</h1>
+    <p class="lead">We bake every order fresh and deliver it ourselves.</p>
+  </header>
+
+  <ul class="info-cards">
+    <li>
+      <Icon name="truck" size={24} />
+      <h2>Delivery days</h2>
+      <p>{deliveryDaysRange(rules)}</p>
+    </li>
+    <li>
+      <Icon name="clock" size={24} />
+      <h2>Notice</h2>
+      <p>At least {rules.minLeadDays} days. Some items need more, shown on their menu page.</p>
+    </li>
+    <li>
+      <Icon name="calendar" size={24} />
+      <h2>Book ahead</h2>
+      <p>Up to {rules.maxAdvanceDays} days in advance.</p>
+    </li>
+    <li>
+      <Icon name="bag" size={24} />
+      <h2>Minimum order</h2>
+      <p>{formatGBP(rules.minOrderPence)} before delivery.</p>
+    </li>
   </ul>
 
-  <h2>Areas and fees</h2>
-  <table class="zones">
-    <thead><tr><th scope="col">Area</th><th scope="col">Postcode districts</th><th scope="col">Fee</th></tr></thead>
-    <tbody>
-      {
-        rules.zones.map((z) => (
-          <tr>
-            <td>{z.name}</td>
-            <td>{z.districts.join(', ')}</td>
-            <td>{formatGBP(z.feePence)}</td>
-          </tr>
-        ))
-      }
-    </tbody>
-  </table>
+  <section class="section">
+    <h2>Areas and fees</h2>
+    <div class="table-card">
+      <table class="zones">
+        <thead><tr><th scope="col">Area</th><th scope="col">Postcode districts</th><th scope="col">Fee</th></tr></thead>
+        <tbody>
+          {
+            rules.zones.map((z) => (
+              <tr>
+                <td>{z.name}</td>
+                <td>{z.districts.join(', ')}</td>
+                <td>{formatGBP(z.feePence)}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">You can check your postcode in the basket before you pay.</p>
+  </section>
 
   {
     rules.blackoutDates.length > 0 && (
-      <>
+      <section class="section">
         <h2>Dates we're closed</h2>
-        <ul>
+        <ul class="closed-dates">
           {rules.blackoutDates.map((d) => (
             <li>{formatDeliveryDate(d)}</li>
           ))}
         </ul>
-      </>
+      </section>
     )
   }
 </Base>

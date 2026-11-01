@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Catalog } from '../src/lib/catalog';
 import {
   checkDeliveryDate,
+  deliveryDaysRange,
   findZone,
   normalisePostcode,
   ukToday,
@@ -152,5 +153,18 @@ describe('validateOrder', () => {
   it('enforces the minimum order and notes length', () => {
     expect(errorsFor({ ...valid, items: [{ id: 'cookie', variant: 'single', qty: 2 }] })[0]).toMatch(/minimum order is £15.00/);
     expect(errorsFor({ ...valid, notes: 'x'.repeat(51) })[0]).toMatch(/up to 50/);
+  });
+});
+
+describe('deliveryDaysRange', () => {
+  const days = (deliveryWeekdays: number[]) => deliveryDaysRange({ ...rules, deliveryWeekdays });
+  it('shortens a run of days to a range', () => {
+    expect(days([2, 3, 4, 5, 6])).toBe('Tuesday to Saturday');
+    expect(days([6, 4, 5])).toBe('Thursday to Saturday');
+  });
+  it('lists other patterns', () => {
+    expect(days([5, 6])).toBe('Fridays and Saturdays');
+    expect(days([1, 3, 5])).toBe('Mondays, Wednesdays and Fridays');
+    expect(days([1, 2, 3, 4, 5, 6, 7])).toBe('every day');
   });
 });

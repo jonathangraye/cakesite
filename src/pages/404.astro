@@ -1,9 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 ---
 
 <Base title="Page not found">
-  <h1>Page not found</h1>
-  <p class="lead">We couldn't find that page.</p>
-  <a class="button" href="/menu/">See the menu</a>
+  <section class="status-page">
+    <span class="status-icon status-icon-muted"><Icon name="search" size={32} /></span>
+    <h1>Page not found</h1>
+    <p class="lead">We couldn't find that page. It may have moved, or the item may no longer be on the menu.</p>
+    <a class="button" href="/menu/">See the menu</a>
+  </section>
 </Base>

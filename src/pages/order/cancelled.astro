@@ -1,9 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
 ---
 
 <Base title="Payment cancelled">
-  <h1>Payment cancelled</h1>
-  <p class="lead">No payment was taken. Your basket has been saved.</p>
-  <a class="button" href="/basket/">Back to your basket</a>
+  <section class="status-page">
+    <span class="status-icon status-icon-muted"><Icon name="cross" size={32} /></span>
+    <h1>Payment cancelled</h1>
+    <p class="lead">No payment was taken. Your basket has been saved.</p>
+    <a class="button" href="/basket/">Back to your basket</a>
+  </section>
 </Base>

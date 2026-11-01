@@ -1,6 +1,12 @@
 ---
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/fraunces/full-italic.css';
+import '@fontsource-variable/dm-sans/index.css';
 import '../styles/global.css';
+import Icon from '../components/Icon.astro';
 import { site } from '../site';
+import rules from '../data/delivery.json';
+import { deliveryDaysRange } from '../lib/order-rules';
 
 interface Props {
   title?: string;
@@ -9,6 +15,12 @@ interface Props {
 
 const { title, description = site.tagline } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : site.name;
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/menu/', label: 'Menu' },
+  { href: '/delivery/', label: 'Delivery' },
+];
+const current = (href: string) => (path.startsWith(href) ? 'page' : undefined);
 ---
 
 <!doctype html>
@@ -18,18 +30,24 @@ const fullTitle = title ? `${title} | ${site.name}` : site.name;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#fbf6ef" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
+    <p class="announce">
+      Baked to order and delivered locally, {deliveryDaysRange(rules)}.{' '}
+      <a href="/delivery/">Check your postcode</a>
+    </p>
     <header class="site-header">
       <div class="wrap header-inner">
         <a class="brand" href="/">{site.name}</a>
-        <nav aria-label="Main">
-          <a href="/menu/">Menu</a>
-          <a href="/delivery/">Delivery</a>
-          <a href="/basket/" class="basket-link">
-            Basket <span class="basket-count" data-basket-count hidden></span>
+        <nav class="main-nav" aria-label="Main">
+          {nav.map((n) => <a href={n.href} aria-current={current(n.href)}>{n.label}</a>)}
+          <a href="/basket/" class="basket-link" aria-current={current('/basket/')}>
+            <Icon name="bag" />
+            <span class="basket-label">Basket</span>
+            <span class="basket-count" data-basket-count hidden></span>
           </a>
         </nav>
       </div>
@@ -38,11 +56,28 @@ const fullTitle = title ? `${title} | ${site.name}` : site.name;
       <slot />
     </main>
     <footer class="site-footer">
-      <div class="wrap">
-        <p>
-          Everything we bake is 100% plant-based. Questions or allergies? Email
-          <a href={`mailto:${site.email}`}>{site.email}</a>.
-        </p>
+      <div class="wrap footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/">{site.name}</a>
+          <p>{site.tagline}</p>
+        </div>
+        <div>
+          <h2 class="footer-title">Shop</h2>
+          <ul>
+            <li><a href="/menu/">Menu</a></li>
+            <li><a href="/basket/">Basket</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="footer-title">Help</h2>
+          <ul>
+            <li><a href="/delivery/">Delivery areas and fees</a></li>
+            <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="wrap footer-bottom">
+        <p>Everything we bake is 100% plant-based. Questions about allergies? Email us before you order.</p>
         <p>&copy; {new Date().getFullYear()} {site.name}</p>
       </div>
     </footer>

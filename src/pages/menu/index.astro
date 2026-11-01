@@ -15,12 +15,26 @@ const groups = CATEGORIES.map((c) => ({
 ---
 
 <Base title="Menu" description="Our full menu of plant-based cakes, cookies and bakes.">
-  <h1>Menu</h1>
-  <p class="lead">Everything is 100% plant-based and baked to order.</p>
+  <header class="page-head">
+    <p class="eyebrow">Our menu</p>
+    <h1>Everything we bake</h1>
+    <p class="lead">Every item is 100% plant-based and baked to order for your delivery date.</p>
+    {
+      groups.length > 1 && (
+        <nav class="pills" aria-label="Menu sections">
+          {groups.map((g) => (
+            <a href={`#${g.id}`}>{g.label}</a>
+          ))}
+        </nav>
+      )
+    }
+  </header>
   {
     groups.map((g) => (
-      <section class="menu-group" id={g.id}>
-        <h2>{g.label}</h2>
+      <section class="menu-group" id={g.id} aria-labelledby={`${g.id}-title`}>
+        <h2 id={`${g.id}-title`} class="group-title">
+          {g.label} <span class="group-count">{g.items.length}</span>
+        </h2>
         <div class="grid">
           {g.items.map((item) => (
             <ProductCard item={item} />

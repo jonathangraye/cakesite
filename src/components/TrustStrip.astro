@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+import rules from '../data/delivery.json';
+import { deliveryDaysRange } from '../lib/order-rules';
+---
+
+<section class="trust" aria-label="Why order from us">
+  <ul class="wrap trust-list">
+    <li>
+      <span class="trust-icon"><Icon name="calendar" size={24} /></span>
+      <div>
+        <h2>Baked to order</h2>
+        <p>Made fresh for the delivery date you choose.</p>
+      </div>
+    </li>
+    <li>
+      <span class="trust-icon"><Icon name="leaf" size={24} /></span>
+      <div>
+        <h2>100% plant-based</h2>
+        <p>No animal products in anything we bake.</p>
+      </div>
+    </li>
+    <li>
+      <span class="trust-icon"><Icon name="truck" size={24} /></span>
+      <div>
+        <h2>Local delivery</h2>
+        <p>Delivered by us, {deliveryDaysRange(rules)}.</p>
+      </div>
+    </li>
+  </ul>
+</section>

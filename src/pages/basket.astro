@@ -5,11 +5,13 @@ import { deliveryDaysSentence } from '../lib/order-rules';
 ---
 
 <Base title="Basket">
-  <h1>Your basket</h1>
+  <header class="page-head">
+    <h1>Your basket</h1>
+  </header>
   <div data-basket>
     <p data-loading>Loading your basket…</p>
-    <div data-empty hidden>
-      <p>Your basket is empty.</p>
+    <div class="empty-state" data-empty hidden>
+      <p class="lead">Your basket is empty.</p>
       <a class="button" href="/menu/">Browse the menu</a>
     </div>
     <p class="notice" data-notice hidden></p>
@@ -29,7 +31,7 @@ import { deliveryDaysSentence } from '../lib/order-rules';
         <input id="delivery-date" name="deliveryDate" type="date" required data-date />
         <p class="field-msg" data-date-msg aria-live="polite"></p>
 
-        <label for="notes">Notes for the baker <span class="muted">(optional)</span></label>
+        <label for="notes">Notes for the baker <span class="optional">(optional)</span></label>
         <textarea id="notes" name="notes" rows="3" maxlength={rules.maxNotesLength} placeholder="Message for the cake, delivery instructions…" data-notes></textarea>
 
         <dl class="totals">
@@ -39,8 +41,8 @@ import { deliveryDaysSentence } from '../lib/order-rules';
         </dl>
 
         <ul class="errors" data-errors role="alert" hidden></ul>
-        <button type="submit" class="button" data-submit>Continue to payment</button>
-        <p class="muted">You'll enter your address and pay on Stripe's secure checkout page.</p>
+        <button type="submit" class="button button-block" data-submit>Continue to payment</button>
+        <p class="muted small">You'll enter your address and pay on Stripe's secure checkout page.</p>
       </form>
     </div>
   </div>
