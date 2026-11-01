@@ -18,6 +18,8 @@ src/lib/order-rules.ts Order validation shared by the basket page and the Lambda
 src/pages/             Site pages, plus catalog.json (prices the Lambda trusts)
 lambda/                Checkout Lambda
 infra/                 Terraform (S3, CloudFront, ACM, Route 53, API Gateway, Lambda)
+infra/bootstrap/       Terraform state bucket, GitHub deploy roles, permissions boundary
+.github/workflows/     CI checks and automatic deploys
 scripts/               Lambda bundling, local checkout API, deploy script
 ```
 
@@ -87,16 +89,33 @@ npm run dev:api  # checkout API on http://localhost:8787 (the dev site proxies /
 
 The Lambda refuses a live key unless `stripe_mode = "live"` is set in Terraform, so test deployments can't take real payments.
 
-## Deploying to AWS
+## Deploying
 
-Prerequisites: Terraform, the AWS CLI with the `default` profile, and the Stripe key in SSM (above).
+**Every push to `main` deploys automatically.** GitHub Actions (`.github/workflows/ci.yml`) runs the type check, tests and build (which validates every menu item), then applies Terraform, uploads the site and runs a smoke test. If any check fails, nothing is deployed. Pull requests get the same checks plus a Terraform plan in the run summary.
+
+So editing a menu file in GitHub's web editor and committing to `main` is enough to update the live site.
+
+GitHub signs in to AWS with short-lived OIDC credentials; there are no AWS keys in GitHub. The repo variables `AWS_DEPLOY_ROLE_ARN`, `AWS_PLAN_ROLE_ARN` and `ALERT_EMAIL` point the workflow at the right roles.
+
+### Deploying from your Mac
+
+Requires Terraform 1.10+ and the AWS CLI.
 
 ```sh
+export AWS_PROFILE=default
 terraform -chdir=infra init   # first time only
 npm run deploy                # build, terraform apply, upload to S3, invalidate CloudFront
 ```
 
-The first deploy creates the certificate and CloudFront distribution, which can take 10–20 minutes. Terraform state is stored locally in `infra/` and is not committed; keep a backup of `infra/terraform.tfstate` or move it to an S3 backend later.
+### Terraform state and the bootstrap stack
+
+Terraform state lives in the `cakesite-tfstate-856359718185` S3 bucket (versioned, encrypted, with S3 lock files), so your Mac and GitHub Actions share it.
+
+`infra/bootstrap/` holds the things the pipeline depends on and can't manage itself: the state bucket, the GitHub deploy and plan roles, and the `cakesite-workload-boundary` permissions boundary. Every role the pipeline creates must carry that boundary, which caps what the app's Lambdas can do. Apply it from your Mac only, when those need to change:
+
+```sh
+AWS_PROFILE=default terraform -chdir=infra/bootstrap apply
+```
 
 ## Going live checklist
 

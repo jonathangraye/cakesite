@@ -1,3 +1,8 @@
+locals {
+  # Created by infra/bootstrap. The deploy role can only create roles that carry it.
+  workload_boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.project}-workload-boundary"
+}
+
 data "aws_iam_policy_document" "lambda_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -9,8 +14,9 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "checkout" {
-  name               = "${var.project}-checkout"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+  name                 = "${var.project}-checkout"
+  assume_role_policy   = data.aws_iam_policy_document.lambda_assume.json
+  permissions_boundary = local.workload_boundary_arn
 }
 
 resource "aws_cloudwatch_log_group" "checkout" {

@@ -1,13 +1,9 @@
+# AWS credentials come from the environment: AWS_PROFILE locally, OIDC in GitHub Actions.
+
 variable "project" {
   description = "Name prefix for all resources."
   type        = string
   default     = "cakesite"
-}
-
-variable "aws_profile" {
-  description = "AWS CLI profile to deploy with."
-  type        = string
-  default     = "default"
 }
 
 variable "aws_region" {

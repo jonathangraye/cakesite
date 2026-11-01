@@ -9,7 +9,7 @@ out/
 .astro/
 
 # Terraform
-infra/.terraform/
+.terraform/
 infra/.build/
 *.tfstate
 *.tfstate.*

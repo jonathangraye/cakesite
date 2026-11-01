@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.7.0"
+  required_version = ">= 1.10.0"
 
   required_providers {
     aws = {
@@ -14,8 +14,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = var.aws_region
-  profile = var.aws_profile
+  region = var.aws_region
 
   default_tags {
     tags = {
@@ -27,9 +26,8 @@ provider "aws" {
 
 # CloudFront only accepts ACM certificates from us-east-1.
 provider "aws" {
-  alias   = "us_east_1"
-  region  = "us-east-1"
-  profile = var.aws_profile
+  alias  = "us_east_1"
+  region = "us-east-1"
 
   default_tags {
     tags = {
