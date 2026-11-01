@@ -152,7 +152,7 @@ data "aws_iam_policy_document" "deploy_app" {
     sid = "RolesRead"
     actions = [
       "iam:GetRole", "iam:ListRolePolicies", "iam:GetRolePolicy", "iam:ListAttachedRolePolicies",
-      "iam:ListInstanceProfilesForRole", "iam:DeleteRole", "iam:DeleteRolePolicy", "iam:UntagRole",
+      "iam:ListInstanceProfilesForRole", "iam:DeleteRole", "iam:DeleteRolePolicy", "iam:TagRole", "iam:UntagRole",
       "iam:UpdateRole", "iam:UpdateAssumeRolePolicy",
     ]
     resources = [local.role_prefix]
@@ -160,7 +160,7 @@ data "aws_iam_policy_document" "deploy_app" {
 
   statement {
     sid       = "RolesWriteWithBoundary"
-    actions   = ["iam:CreateRole", "iam:PutRolePolicy", "iam:PutRolePermissionsBoundary", "iam:TagRole"]
+    actions   = ["iam:CreateRole", "iam:PutRolePolicy", "iam:PutRolePermissionsBoundary"]
     resources = [local.role_prefix]
     condition {
       test     = "StringEquals"
