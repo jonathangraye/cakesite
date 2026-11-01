@@ -5,7 +5,19 @@ import { site } from '../../site';
 
 <Base title="Thank you">
   <h1>Thank you for your order</h1>
-  <p class="lead">Your payment went through. A receipt is on its way to your email.</p>
+  <p class="lead">We've received your order. A receipt is on its way to your email.</p>
+
+  <section class="order-summary" data-summary hidden>
+    <h2>Your order</h2>
+    <p data-delivery></p>
+    <ul class="summary-lines" data-items></ul>
+    <dl class="totals">
+      <dt>Subtotal</dt><dd data-subtotal></dd>
+      <dt>Delivery</dt><dd data-delivery-fee></dd>
+      <dt class="total">Total</dt><dd class="total" data-total></dd>
+    </dl>
+  </section>
+
   <p>
     We'll confirm your delivery date by email. If anything needs changing, email
     <a href={`mailto:${site.email}`}>{site.email}</a>.
@@ -15,5 +27,8 @@ import { site } from '../../site';
 
 <script>
   import { clearBasket } from '../../scripts/basket';
+  import { showOrderSummary } from '../../scripts/order-summary';
+
   clearBasket();
+  void showOrderSummary();
 </script>

@@ -56,7 +56,7 @@ jobs:
       contents: read
       id-token: write
     env:
-      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+      TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -104,7 +104,7 @@ jobs:
       contents: read
       id-token: write
     env:
-      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+      TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -132,4 +132,9 @@ jobs:
             echo "$path $code"
             [ "$code" = 200 ]
           done
+          # The API routes exist and reject bad input (400, not CloudFront's 404 page).
+          code="$(curl -s -o /dev/null -w '%{http_code}' "$url/api/order?session_id=x")"
+          echo "/api/order $code"; [ "$code" = 400 ]
+          code="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$url/api/stripe/webhook")"
+          echo "/api/stripe/webhook $code"; [ "$code" = 400 ]
           echo "Deployed to $url" >> "$GITHUB_STEP_SUMMARY"

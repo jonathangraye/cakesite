@@ -46,12 +46,13 @@ resource "aws_iam_role_policy" "checkout" {
 
 data "archive_file" "checkout" {
   type        = "zip"
-  source_dir  = "${path.module}/../lambda/dist"
+  source_dir  = "${path.module}/../lambda/dist/api"
   output_path = "${path.module}/.build/checkout.zip"
 }
 
 resource "aws_lambda_function" "checkout" {
   function_name    = "${var.project}-checkout"
+  description      = "Public API: starts Stripe Checkout and shows order summaries."
   role             = aws_iam_role.checkout.arn
   runtime          = "nodejs24.x"
   architectures    = ["arm64"]
@@ -92,6 +93,12 @@ resource "aws_apigatewayv2_integration" "checkout" {
 resource "aws_apigatewayv2_route" "checkout" {
   api_id    = aws_apigatewayv2_api.checkout.id
   route_key = "POST /api/checkout"
+  target    = "integrations/${aws_apigatewayv2_integration.checkout.id}"
+}
+
+resource "aws_apigatewayv2_route" "order" {
+  api_id    = aws_apigatewayv2_api.checkout.id
+  route_key = "GET /api/order"
   target    = "integrations/${aws_apigatewayv2_integration.checkout.id}"
 }
 

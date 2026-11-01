@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadStripeKey } from '../lambda/stripe-key';
+import { loadStripeKey, loadWebhookSecret } from '../lambda/stripe-key';
 
 describe('loadStripeKey', () => {
   it('accepts a test key in test mode', async () => {
@@ -17,5 +17,15 @@ describe('loadStripeKey', () => {
   it('rejects unknown modes and missing config', async () => {
     await expect(loadStripeKey({ STRIPE_MODE: 'prod', STRIPE_SECRET_KEY: 'sk_test_abc' })).rejects.toThrow(/must be/);
     await expect(loadStripeKey({})).rejects.toThrow(/STRIPE_SECRET_KEY/);
+  });
+});
+
+describe('loadWebhookSecret', () => {
+  it('accepts and trims a signing secret', async () => {
+    await expect(loadWebhookSecret({ STRIPE_WEBHOOK_SECRET: 'whsec_abc\n' })).resolves.toBe('whsec_abc');
+  });
+  it('rejects other values and missing config', async () => {
+    await expect(loadWebhookSecret({ STRIPE_WEBHOOK_SECRET: 'sk_test_abc' })).rejects.toThrow(/whsec_/);
+    await expect(loadWebhookSecret({})).rejects.toThrow(/STRIPE_WEBHOOK_SECRET/);
   });
 });

@@ -1,38 +1,23 @@
 import { readFileSync } from 'node:fs';
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import Stripe from 'stripe';
 import deliveryJson from '../src/data/delivery.json';
 import type { Catalog } from '../src/lib/catalog';
 import { validateOrder, type DeliveryRules } from '../src/lib/order-rules';
+import { errorSummary, json } from './http';
 import { buildSessionParams } from './session';
-import { loadStripeKey } from './stripe-key';
+import { getStripe } from './stripe-client';
 
 const rules: DeliveryRules = deliveryJson;
 const MAX_BODY_BYTES = 20_000;
 
 let catalog: Catalog | undefined;
-let stripe: Stripe | undefined;
 
 function getCatalog(): Catalog {
   catalog ??= JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8')) as Catalog;
   return catalog;
 }
 
-async function getStripe(): Promise<Stripe> {
-  stripe ??= new Stripe(await loadStripeKey());
-  return stripe;
-}
-
-// Never return 403/404: CloudFront swaps those for the site's 404 page.
-function json(statusCode: number, body: unknown): APIGatewayProxyStructuredResultV2 {
-  return {
-    statusCode,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-    body: JSON.stringify(body),
-  };
-}
-
-export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+export async function checkout(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
   const raw = event.isBase64Encoded ? Buffer.from(event.body ?? '', 'base64').toString('utf8') : (event.body ?? '');
   if (Buffer.byteLength(raw) > MAX_BODY_BYTES) return json(413, { errors: ['Order is too large.'] });
 
@@ -59,8 +44,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     return json(200, { url: session.url });
   } catch (err) {
     // Log the reason only: order details include the customer's postcode and notes.
-    const e = err as { type?: string; code?: string; message?: string; detail?: { code?: string; message?: string } };
-    console.error('checkout_failed:', e.type ?? 'Error', e.code ?? e.detail?.code ?? '', e.message ?? String(err), e.detail?.message ?? '');
+    console.error('checkout_failed:', errorSummary(err));
     return json(500, { errors: ["We couldn't start payment. Please try again in a moment."] });
   }
 }

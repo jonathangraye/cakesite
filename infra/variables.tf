@@ -40,3 +40,22 @@ variable "stripe_secret_param_name" {
   type        = string
   default     = "/cakesite/stripe_secret_key"
 }
+
+variable "stripe_webhook_secret_param_name" {
+  description = "SSM SecureString parameter holding the Stripe webhook signing secret (whsec_...). Created outside Terraform."
+  type        = string
+  default     = "/cakesite/stripe_webhook_secret"
+}
+
+variable "alert_email" {
+  description = "Where order and error alerts are emailed. Set by the ALERT_EMAIL repo variable in CI; empty means no email subscription."
+  type        = string
+  default     = ""
+  # Keeps the address out of plan output, which is public on this repo's Actions runs.
+  sensitive = true
+
+  validation {
+    condition     = var.alert_email == "" || can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.alert_email))
+    error_message = "alert_email must be an email address or empty."
+  }
+}

@@ -3,9 +3,9 @@
 A website for ordering plant-based baked goods. Customers browse the menu, add items to a basket, check their postcode is in the delivery area, pick a preferred delivery date and pay with Stripe Checkout.
 
 - **Site:** [Astro](https://astro.build) static pages, served from S3 through CloudFront at `https://cake.graye.co.uk`.
-- **Checkout:** one AWS Lambda behind API Gateway at `/api/checkout`, which creates a Stripe Checkout session.
+- **Checkout:** an AWS Lambda behind API Gateway. `POST /api/checkout` creates a Stripe Checkout session, and `GET /api/order` gives the success page an order summary (items, totals, delivery date and postcode district only).
 - **Infrastructure:** Terraform in `infra/`.
-- **Orders:** Stripe emails customer receipts and seller notifications. Delivery date, postcode and notes are stored as metadata on each payment in the Stripe dashboard.
+- **Orders:** Stripe emails customer receipts and seller notifications. A second Lambda receives Stripe webhooks at `/api/stripe/webhook` and saves each paid order to the `cakesite-orders` DynamoDB table. Delivery date, postcode and notes are also stored as metadata on each payment in the Stripe dashboard.
 
 ## Project layout
 
@@ -16,8 +16,8 @@ src/content.config.ts  The menu item schema: every item is checked against this 
 src/data/delivery.json Delivery zones, fees, delivery days, lead times, minimum order
 src/lib/order-rules.ts Order validation shared by the basket page and the Lambda
 src/pages/             Site pages, plus catalog.json (prices the Lambda trusts)
-lambda/                Checkout Lambda
-infra/                 Terraform (S3, CloudFront, ACM, Route 53, API Gateway, Lambda)
+lambda/                API Lambda (checkout, order summary) and Stripe webhook Lambda
+infra/                 Terraform (S3, CloudFront, ACM, Route 53, API Gateway, Lambda, DynamoDB, SNS alerts)
 infra/bootstrap/       Terraform state bucket, GitHub deploy roles, permissions boundary
 .github/workflows/     CI checks and automatic deploys
 scripts/               Lambda bundling, local checkout API, deploy script
@@ -49,7 +49,16 @@ Edit `src/data/delivery.json`:
 
 **The zones are placeholders (`XX1`–`XX4`).** Replace them with real districts before launch.
 
-Stripe Checkout cannot restrict addresses by postcode. The site checks the postcode before payment, and the checkout page reminds customers to use an address in that postcode. Check the address against the `delivery_postcode` metadata when you fulfil an order.
+Stripe Checkout cannot restrict addresses by postcode. The site checks the postcode before payment, and the checkout page reminds customers to use an address in that postcode. After payment, the webhook compares the delivery address with the checked postcode:
+
+- **Same postcode, or another postcode in the same zone:** nothing to do. The payment gets `address_check` metadata of `match` or `same_zone`.
+- **Different zone or outside the area:** the payment description in Stripe starts with `[CHECK ADDRESS]`, its `address_check` metadata is `mismatch`, and an alert is emailed to the `ALERT_EMAIL` address. Contact the customer before baking.
+
+## Orders and alerts
+
+Each paid order is saved to the `cakesite-orders` DynamoDB table (AWS console → DynamoDB → Tables → cakesite-orders → Explore items). The `byDeliveryDate` index lists the orders for a given day. The table has point-in-time recovery and deletion protection.
+
+The `cakesite-alerts` SNS topic emails you when an address needs checking, a delayed payment (for example a bank debit) fails, or the API returns server errors. AWS sends a confirmation email when the subscription is created; alerts only arrive after you click the link in it.
 
 ## Local development
 
@@ -65,14 +74,16 @@ npm run check    # type check
 To test checkout locally, copy `.env.example` to `.env`, add a Stripe **test** key, then in a second terminal:
 
 ```sh
-npm run dev:api  # checkout API on http://localhost:8787 (the dev site proxies /api to it)
+npm run dev:api  # local API on http://localhost:8787 (the dev site proxies /api to it)
 ```
 
 `dev:api` builds the catalog first, so restart it after changing menu items. Use Stripe's test card `4242 4242 4242 4242` with any future expiry and CVC.
 
+To test webhooks locally, run `stripe listen --forward-to localhost:8787/api/stripe/webhook`, put the `whsec_` secret it prints in `.env` as `STRIPE_WEBHOOK_SECRET`, and restart `dev:api`. Locally, orders are kept in memory and alerts are printed to the terminal.
+
 ## Stripe setup
 
-1. In the Stripe dashboard (test mode), create a restricted key with **Checkout Sessions: Write** permission. A standard `sk_test_` key also works.
+1. In the Stripe dashboard (test mode), create a restricted key with **Checkout Sessions: Write**, **PaymentIntents: Write** and **Products: Read** permissions. A standard `sk_test_` key also works.
 2. Store it in AWS SSM Parameter Store. It is read by the Lambda at runtime and never stored in Terraform state or the repo:
 
    Run these lines one at a time. Paste the key at the prompt (it won't be shown) and press Enter:
@@ -85,7 +96,8 @@ npm run dev:api  # checkout API on http://localhost:8787 (the dev site proxies /
    unset STRIPE_KEY
    ```
 
-3. In Stripe, turn on **Settings → Emails → Successful payments** for customer receipts (Stripe doesn't send these in test mode), and turn on email notifications for successful payments under your user's notification settings.
+3. In Stripe, add a webhook endpoint (**Developers → Webhooks**) for `https://cake.graye.co.uk/api/stripe/webhook` with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `checkout.session.async_payment_failed`. Store its signing secret the same way, as `/cakesite/stripe_webhook_secret`.
+4. In Stripe, turn on **Settings → Emails → Successful payments** for customer receipts (Stripe doesn't send these in test mode), and turn on email notifications for successful payments under your user's notification settings.
 
 The Lambda refuses a live key unless `stripe_mode = "live"` is set in Terraform, so test deployments can't take real payments.
 
@@ -95,7 +107,7 @@ The Lambda refuses a live key unless `stripe_mode = "live"` is set in Terraform,
 
 So editing a menu file in GitHub's web editor and committing to `main` is enough to update the live site.
 
-GitHub signs in to AWS with short-lived OIDC credentials; there are no AWS keys in GitHub. The repo variables `AWS_DEPLOY_ROLE_ARN`, `AWS_PLAN_ROLE_ARN` and `ALERT_EMAIL` point the workflow at the right roles.
+GitHub signs in to AWS with short-lived OIDC credentials; there are no AWS keys in GitHub. The repo variables `AWS_DEPLOY_ROLE_ARN` and `AWS_PLAN_ROLE_ARN` point the workflow at the right roles. The alert email address is the repo secret `ALERT_EMAIL` (a secret rather than a variable so it stays out of the public Actions logs).
 
 ### Deploying from your Mac
 
@@ -123,5 +135,6 @@ AWS_PROFILE=default terraform -chdir=infra/bootstrap apply
 - [ ] Real business name and email in `src/site.ts`
 - [ ] Real photos for every menu item
 - [ ] Live Stripe key in SSM and `stripe_mode = "live"` in `infra/terraform.tfvars`
+- [ ] Live-mode webhook endpoint in Stripe, with its signing secret in SSM
 - [ ] Stripe receipt and notification emails turned on
 - [ ] Privacy policy and terms pages
