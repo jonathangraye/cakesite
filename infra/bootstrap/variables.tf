@@ -14,6 +14,12 @@ variable "github_repo" {
   default     = "jonathangraye/cakesite"
 }
 
+variable "github_sub_prefix" {
+  description = "OIDC subject prefix for the repo. The repo uses GitHub's immutable subject format (owner@id/repo@id), so a renamed or recreated repo can't inherit access. Check with: gh api repos/OWNER/REPO/actions/oidc/customization/sub"
+  type        = string
+  default     = "repo:jonathangraye@71887682/cakesite@1441907430"
+}
+
 variable "hosted_zone_name" {
   type    = string
   default = "graye.co.uk"
