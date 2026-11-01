@@ -30,3 +30,22 @@ variable "site_domains" {
   type        = list(string)
   default     = ["cake.graye.co.uk"]
 }
+
+# The deploy role may only change these existing CloudFront and ACM resources, because the account
+# also hosts other sites. If Terraform ever needs to replace one, apply bootstrap from your Mac with
+# the new ID first (find it with `terraform -chdir=infra state show`).
+variable "cloudfront_distribution_id" {
+  type    = string
+  default = "E1R1HKLBFXWJDX"
+}
+
+variable "cloudfront_oac_id" {
+  type    = string
+  default = "E1DK2LZL4HIAX0"
+}
+
+variable "certificate_arn" {
+  description = "The us-east-1 ACM certificate for the site."
+  type        = string
+  default     = "arn:aws:acm:us-east-1:856359718185:certificate/dced18a1-51f4-4d46-b6f3-8439d270ebf1"
+}

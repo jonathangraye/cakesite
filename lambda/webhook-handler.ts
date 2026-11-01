@@ -3,7 +3,7 @@ import type Stripe from 'stripe';
 import deliveryJson from '../src/data/delivery.json';
 import type { DeliveryRules } from '../src/lib/order-rules';
 import { errorSummary, json } from './http';
-import { getStripe, getWebhookSecret } from './stripe-client';
+import { getStripe, getWebhookSecret, retrieveSessionWithItems } from './stripe-client';
 import { stripeMode } from './stripe-key';
 import { processEvent, type WebhookDeps } from './webhook';
 
@@ -73,8 +73,7 @@ async function productionDeps(): Promise<WebhookDeps> {
 
   deps = {
     stripe: {
-      retrieveSession: (id) =>
-        stripe.checkout.sessions.retrieve(id, { expand: ['line_items.data.price.product'] }),
+      retrieveSession: (id) => retrieveSessionWithItems(stripe, id, { products: true }),
       updatePaymentIntent: (id, params) => stripe.paymentIntents.update(id, params),
     },
     store,

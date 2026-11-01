@@ -87,9 +87,9 @@ data "aws_iam_policy_document" "deploy_site" {
     sid     = "CloudFrontManage"
     actions = ["cloudfront:*"]
     resources = [
-      "arn:aws:cloudfront::${local.account_id}:distribution/*",
+      "arn:aws:cloudfront::${local.account_id}:distribution/${var.cloudfront_distribution_id}",
       "arn:aws:cloudfront::${local.account_id}:function/${var.project}-*",
-      "arn:aws:cloudfront::${local.account_id}:origin-access-control/*",
+      "arn:aws:cloudfront::${local.account_id}:origin-access-control/${var.cloudfront_oac_id}",
     ]
   }
 
@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "deploy_site" {
   statement {
     sid       = "Certificates"
     actions   = ["acm:*"]
-    resources = ["arn:aws:acm:us-east-1:${local.account_id}:certificate/*"]
+    resources = [var.certificate_arn]
   }
 
   statement {
@@ -207,7 +207,8 @@ data "aws_iam_policy_document" "deploy_app" {
   statement {
     sid = "TablesControlPlane"
     actions = [
-      "dynamodb:CreateTable", "dynamodb:DeleteTable", "dynamodb:DescribeTable", "dynamodb:UpdateTable",
+      # No DeleteTable: order history must survive a compromised or mistaken deploy.
+      "dynamodb:CreateTable", "dynamodb:DescribeTable", "dynamodb:UpdateTable",
       "dynamodb:DescribeContinuousBackups", "dynamodb:UpdateContinuousBackups", "dynamodb:DescribeTimeToLive",
       "dynamodb:UpdateTimeToLive", "dynamodb:TagResource", "dynamodb:UntagResource", "dynamodb:ListTagsOfResource",
     ]
@@ -278,8 +279,9 @@ data "aws_iam_policy_document" "plan_extra" {
     effect = "Deny"
     actions = [
       "ssm:GetParameter*", "secretsmanager:GetSecretValue", "kms:Decrypt",
-      "dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:Query", "dynamodb:Scan",
-      "dynamodb:ExportTableToPointInTime", "logs:GetLogEvents", "logs:FilterLogEvents", "logs:StartQuery",
+      "dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:Query", "dynamodb:Scan", "dynamodb:PartiQLSelect",
+      "dynamodb:GetRecords", "dynamodb:GetShardIterator", "dynamodb:ExportTableToPointInTime",
+      "logs:GetLogEvents", "logs:FilterLogEvents", "logs:StartQuery", "logs:GetQueryResults", "logs:StartLiveTail",
       "lambda:GetFunction",
     ]
     resources = ["*"]
@@ -288,7 +290,7 @@ data "aws_iam_policy_document" "plan_extra" {
   statement {
     sid           = "DenyOtherBucketObjects"
     effect        = "Deny"
-    actions       = ["s3:GetObject"]
+    actions       = ["s3:GetObject*"]
     not_resources = ["${local.state_arn}/*", "${local.site_bucket}/*"]
   }
 }

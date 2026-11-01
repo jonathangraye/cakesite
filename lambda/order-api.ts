@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { errorSummary, json } from './http';
 import { SESSION_ID_RE, summariseSession } from './order-summary';
-import { getStripe } from './stripe-client';
+import { getStripe, retrieveSessionWithItems } from './stripe-client';
 
 const NOT_FOUND = { errors: ["We couldn't find that order."] };
 
@@ -11,7 +11,7 @@ export async function orderSummary(event: APIGatewayProxyEventV2): Promise<APIGa
 
   try {
     const stripe = await getStripe();
-    const session = await stripe.checkout.sessions.retrieve(id, { expand: ['line_items'] });
+    const session = await retrieveSessionWithItems(stripe, id);
     const summary = summariseSession(session);
     return summary ? json(200, summary) : json(422, NOT_FOUND);
   } catch (err) {

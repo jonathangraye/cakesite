@@ -89,7 +89,7 @@ function lineItem(li: Stripe.LineItem): OrderItem {
   };
 }
 
-/** Expects a session retrieved with `expand: ['line_items.data.price.product']`. */
+/** Expects a session from `retrieveSessionWithItems(..., { products: true })`. */
 export function buildOrderRecord(session: Stripe.Checkout.Session, rules: DeliveryRules, now: Date): OrderRecord {
   const meta = session.metadata ?? {};
   const shipping = session.collected_information?.shipping_details ?? null;

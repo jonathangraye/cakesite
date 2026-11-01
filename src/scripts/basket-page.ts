@@ -13,6 +13,17 @@ import deliveryJson from '../data/delivery.json';
 
 const rules: DeliveryRules = deliveryJson;
 
+/** Only ever leave the site for Stripe Checkout, whatever the API returns. */
+function stripeCheckoutUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'https:' && url.hostname === 'checkout.stripe.com' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 const root = document.querySelector<HTMLElement>('[data-basket]');
 
 function el<T extends HTMLElement>(selector: string): T {
@@ -29,7 +40,7 @@ interface ResolvedLine extends BasketLine {
 function resolve(catalog: Catalog): { lines: ResolvedLine[]; dropped: number } {
   const stored = readBasket();
   const lines = stored.flatMap((l) => {
-    const item = catalog.items[l.id];
+    const item = Object.hasOwn(catalog.items, l.id) ? catalog.items[l.id] : undefined;
     const v = item?.variants.find((x) => x.id === l.variant);
     return item && v && item.available ? [{ ...l, item, v }] : [];
   });
@@ -202,8 +213,9 @@ async function main() {
         body: JSON.stringify(payload),
       });
       const body = (await res.json().catch(() => ({}))) as { url?: string; errors?: string[] };
-      if (res.ok && body.url) {
-        window.location.assign(body.url);
+      const url = res.ok ? stripeCheckoutUrl(body.url) : null;
+      if (url) {
+        window.location.assign(url);
         return;
       }
       setErrors(errorsEl, body.errors ?? ['Something went wrong. Please try again.']);
