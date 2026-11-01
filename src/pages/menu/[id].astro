@@ -1,0 +1,102 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import DietaryBadges from '../../components/DietaryBadges.astro';
+import { formatGBP, toPence } from '../../lib/catalog';
+import { ALLERGEN_LABELS, CATEGORY_LABELS } from '../../lib/menu-options';
+import rules from '../../data/delivery.json';
+
+export async function getStaticPaths() {
+  const items = await getCollection('menu');
+  return items.map((item) => ({ params: { id: item.id }, props: { item } }));
+}
+
+interface Props {
+  item: CollectionEntry<'menu'>;
+}
+
+const { item } = Astro.props;
+const d = item.data;
+const { Content } = await render(item);
+const noticeDays = Math.max(d.leadTimeDays, rules.minLeadDays);
+const list = (keys: (keyof typeof ALLERGEN_LABELS)[]) => keys.map((k) => ALLERGEN_LABELS[k]).join(', ');
+---
+
+<Base title={d.name} description={d.summary}>
+  <p class="crumbs"><a href="/menu/">Menu</a> / <a href={`/menu/#${d.category}`}>{CATEGORY_LABELS[d.category]}</a></p>
+  <div class="product">
+    <Image src={d.image} alt={d.imageAlt} width={800} height={600} loading="eager" class="product-image" />
+    <div>
+      <h1>{d.name}</h1>
+      <p class="lead">{d.summary}</p>
+      <DietaryBadges dietary={d.dietary} />
+
+      {
+        d.available ? (
+          <form class="add-form" data-add-form data-item-id={item.id} data-max-qty={rules.maxQuantityPerLine}>
+            <fieldset>
+              <legend>Choose an option</legend>
+              {d.variants.map((v, i) => (
+                <label class="variant">
+                  <input type="radio" name="variant" value={v.id} checked={i === 0} required />
+                  <span>{v.label}</span>
+                  <span class="price">{formatGBP(toPence(v.price))}</span>
+                </label>
+              ))}
+            </fieldset>
+            <label class="qty">
+              Quantity
+              <input type="number" name="qty" min="1" max={rules.maxQuantityPerLine} value="1" required />
+            </label>
+            <button type="submit" class="button">Add to basket</button>
+            <p class="form-status" role="status" data-status></p>
+          </form>
+        ) : (
+          <p class="notice">This item is currently unavailable.</p>
+        )
+      }
+
+      <p class="muted">Please order at least {noticeDays} days before your delivery date.</p>
+
+      <div class="prose"><Content /></div>
+
+      <h2>Ingredients</h2>
+      <p>{d.ingredients}</p>
+
+      <h2>Allergens</h2>
+      {
+        d.allergens.length > 0 ? (
+          <p>Contains: <strong>{list(d.allergens)}</strong>.</p>
+        ) : (
+          <p>Contains none of the 14 major allergens.</p>
+        )
+      }
+      {d.mayContain.length > 0 && <p>May contain: {list(d.mayContain)}.</p>}
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { addToBasket } from '../../scripts/basket';
+
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-add-form]')) {
+    const status = form.querySelector<HTMLElement>('[data-status]');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const max = Number(form.dataset.maxQty);
+      const qty = Math.trunc(Number(data.get('qty')));
+      if (!Number.isFinite(qty) || qty < 1) return;
+      addToBasket(form.dataset.itemId as string, String(data.get('variant')), qty, max);
+      if (status) {
+        status.textContent = '';
+        status.append('Added to your basket. ');
+        const link = document.createElement('a');
+        link.href = '/basket/';
+        link.textContent = 'View basket';
+        status.append(link);
+      }
+    });
+  }
+</script>

@@ -1,0 +1,23 @@
+{
+  "minLeadDays": 2,
+  "maxAdvanceDays": 60,
+  "deliveryWeekdays": [2, 3, 4, 5, 6],
+  "blackoutDates": ["2026-12-25", "2026-12-26"],
+  "minOrderPence": 1500,
+  "maxQuantityPerLine": 20,
+  "maxNotesLength": 450,
+  "zones": [
+    {
+      "id": "zone-a",
+      "name": "Zone A (placeholder)",
+      "feePence": 400,
+      "districts": ["XX1", "XX2"]
+    },
+    {
+      "id": "zone-b",
+      "name": "Zone B (placeholder)",
+      "feePence": 700,
+      "districts": ["XX3", "XX4"]
+    }
+  ]
+}

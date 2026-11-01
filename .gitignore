@@ -6,6 +6,15 @@ dist/
 build/
 .next/
 out/
+.astro/
+
+# Terraform
+infra/.terraform/
+infra/.build/
+*.tfstate
+*.tfstate.*
+*.tfplan
+infra/terraform.tfvars
 
 # Environment and secrets
 .env

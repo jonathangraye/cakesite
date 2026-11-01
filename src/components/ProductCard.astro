@@ -1,0 +1,28 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { formatGBP, toPence } from '../lib/catalog';
+import DietaryBadges from './DietaryBadges.astro';
+
+interface Props {
+  item: CollectionEntry<'menu'>;
+}
+
+const { item } = Astro.props;
+const d = item.data;
+const prices = d.variants.map((v) => toPence(v.price));
+const min = Math.min(...prices);
+const priceLabel = prices.length > 1 ? `From ${formatGBP(min)}` : formatGBP(min);
+---
+
+<article class="card">
+  <a href={`/menu/${item.id}/`} class="card-link">
+    <Image src={d.image} alt={d.imageAlt} width={480} height={360} class="card-image" />
+    <div class="card-body">
+      <h3>{d.name}</h3>
+      <p>{d.summary}</p>
+      <p class="price">{d.available ? priceLabel : 'Currently unavailable'}</p>
+      <DietaryBadges dietary={d.dietary} />
+    </div>
+  </a>
+</article>

@@ -1,0 +1,64 @@
+---
+import '../styles/global.css';
+import { site } from '../site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = site.tagline } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : site.name;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">{site.name}</a>
+        <nav aria-label="Main">
+          <a href="/menu/">Menu</a>
+          <a href="/delivery/">Delivery</a>
+          <a href="/basket/" class="basket-link">
+            Basket <span class="basket-count" data-basket-count hidden></span>
+          </a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="wrap">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Everything we bake is 100% plant-based. Questions or allergies? Email
+          <a href={`mailto:${site.email}`}>{site.email}</a>.
+        </p>
+        <p>&copy; {new Date().getFullYear()} {site.name}</p>
+      </div>
+    </footer>
+    <script>
+      import { basketCount } from '../scripts/basket';
+
+      const update = () => {
+        const n = basketCount();
+        for (const el of document.querySelectorAll<HTMLElement>('[data-basket-count]')) {
+          el.textContent = String(n);
+          el.hidden = n === 0;
+        }
+      };
+      update();
+      document.addEventListener('basket:change', update);
+      window.addEventListener('storage', update);
+    </script>
+  </body>
+</html>

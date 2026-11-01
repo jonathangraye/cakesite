@@ -1,0 +1,14 @@
+---
+import { DIETARY_LABELS, type Dietary } from '../lib/menu-options';
+
+interface Props {
+  dietary: Dietary[];
+}
+
+const { dietary } = Astro.props;
+---
+
+<ul class="badges" aria-label="Dietary information">
+  <li class="badge badge-vegan">Plant-based</li>
+  {dietary.map((d) => <li class="badge">{DIETARY_LABELS[d]}</li>)}
+</ul>

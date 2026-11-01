@@ -1,0 +1,19 @@
+---
+import Base from '../../layouts/Base.astro';
+import { site } from '../../site';
+---
+
+<Base title="Thank you">
+  <h1>Thank you for your order</h1>
+  <p class="lead">Your payment went through. A receipt is on its way to your email.</p>
+  <p>
+    We'll confirm your delivery date by email. If anything needs changing, email
+    <a href={`mailto:${site.email}`}>{site.email}</a>.
+  </p>
+  <a class="button" href="/menu/">Back to the menu</a>
+</Base>
+
+<script>
+  import { clearBasket } from '../../scripts/basket';
+  clearBasket();
+</script>

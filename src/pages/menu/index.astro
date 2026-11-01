@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { CATEGORIES, CATEGORY_LABELS } from '../../lib/menu-options';
+
+const items = (await getCollection('menu')).sort(
+  (a, b) => a.data.sortOrder - b.data.sortOrder || a.data.name.localeCompare(b.data.name),
+);
+const groups = CATEGORIES.map((c) => ({
+  id: c,
+  label: CATEGORY_LABELS[c],
+  items: items.filter((i) => i.data.category === c),
+})).filter((g) => g.items.length > 0);
+---
+
+<Base title="Menu" description="Our full menu of plant-based cakes, cookies and bakes.">
+  <h1>Menu</h1>
+  <p class="lead">Everything is 100% plant-based and baked to order.</p>
+  {
+    groups.map((g) => (
+      <section class="menu-group" id={g.id}>
+        <h2>{g.label}</h2>
+        <div class="grid">
+          {g.items.map((item) => (
+            <ProductCard item={item} />
+          ))}
+        </div>
+      </section>
+    ))
+  }
+</Base>

@@ -1,0 +1,46 @@
+---
+import Base from '../layouts/Base.astro';
+import rules from '../data/delivery.json';
+import { formatGBP } from '../lib/catalog';
+import { deliveryDaysSentence, formatDeliveryDate } from '../lib/order-rules';
+---
+
+<Base title="Delivery" description="Where we deliver, delivery fees and how much notice we need.">
+  <h1>Delivery</h1>
+  <p class="lead">We bake every order fresh and deliver it ourselves.</p>
+  <ul>
+    <li>{deliveryDaysSentence(rules)}</li>
+    <li>Please order at least {rules.minLeadDays} days ahead. Some items need more notice, shown on their menu page.</li>
+    <li>You can order up to {rules.maxAdvanceDays} days ahead.</li>
+    <li>The minimum order is {formatGBP(rules.minOrderPence)} before delivery.</li>
+  </ul>
+
+  <h2>Areas and fees</h2>
+  <table class="zones">
+    <thead><tr><th scope="col">Area</th><th scope="col">Postcode districts</th><th scope="col">Fee</th></tr></thead>
+    <tbody>
+      {
+        rules.zones.map((z) => (
+          <tr>
+            <td>{z.name}</td>
+            <td>{z.districts.join(', ')}</td>
+            <td>{formatGBP(z.feePence)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {
+    rules.blackoutDates.length > 0 && (
+      <>
+        <h2>Dates we're closed</h2>
+        <ul>
+          {rules.blackoutDates.map((d) => (
+            <li>{formatDeliveryDate(d)}</li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+</Base>

@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import rules from '../data/delivery.json';
+import { deliveryDaysSentence } from '../lib/order-rules';
+---
+
+<Base title="Basket">
+  <h1>Your basket</h1>
+  <div data-basket>
+    <p data-loading>Loading your basket…</p>
+    <div data-empty hidden>
+      <p>Your basket is empty.</p>
+      <a class="button" href="/menu/">Browse the menu</a>
+    </div>
+    <p class="notice" data-notice hidden></p>
+
+    <div class="basket" data-content hidden>
+      <ul class="basket-lines" data-lines></ul>
+
+      <form class="checkout-form" data-form novalidate>
+        <h2>Delivery</h2>
+        <p class="muted">{deliveryDaysSentence(rules)} <a href="/delivery/">See delivery areas</a>.</p>
+
+        <label for="postcode">Delivery postcode</label>
+        <input id="postcode" name="postcode" autocomplete="postal-code" required data-postcode />
+        <p class="field-msg" data-postcode-msg aria-live="polite"></p>
+
+        <label for="delivery-date">Preferred delivery date</label>
+        <input id="delivery-date" name="deliveryDate" type="date" required data-date />
+        <p class="field-msg" data-date-msg aria-live="polite"></p>
+
+        <label for="notes">Notes for the baker <span class="muted">(optional)</span></label>
+        <textarea id="notes" name="notes" rows="3" maxlength={rules.maxNotesLength} placeholder="Message for the cake, delivery instructions…" data-notes></textarea>
+
+        <dl class="totals">
+          <dt>Subtotal</dt><dd data-subtotal></dd>
+          <dt>Delivery</dt><dd data-delivery>Enter your postcode</dd>
+          <dt class="total">Total</dt><dd class="total" data-total></dd>
+        </dl>
+
+        <ul class="errors" data-errors role="alert" hidden></ul>
+        <button type="submit" class="button" data-submit>Continue to payment</button>
+        <p class="muted">You'll enter your address and pay on Stripe's secure checkout page.</p>
+      </form>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import '../scripts/basket-page';
+</script>

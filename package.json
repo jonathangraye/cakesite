@@ -1,0 +1,33 @@
+{
+  "name": "cakesite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A website for ordering plant-based baked goods",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "dev:api": "astro build && node scripts/build-lambda.mjs && node --env-file-if-exists=.env scripts/dev-api.mjs",
+    "build": "astro build && node scripts/build-lambda.mjs",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "deploy": "sh scripts/deploy.sh"
+  },
+  "dependencies": {
+    "astro": "^7.4.4",
+    "sharp": "^0.35.5",
+    "stripe": "^23.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@aws-sdk/client-ssm": "^3.1161.0",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
