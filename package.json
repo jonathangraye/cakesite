@@ -19,20 +19,20 @@
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
-    "astro": "^7.4.4",
+    "astro": "^7.4.5",
     "sharp": "^0.35.5",
     "stripe": "^23.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
-    "@aws-sdk/client-dynamodb": "^3.1161.0",
-    "@aws-sdk/client-sns": "^3.1161.0",
-    "@aws-sdk/client-ssm": "^3.1161.0",
-    "@aws-sdk/lib-dynamodb": "^3.1161.0",
+    "@aws-sdk/client-dynamodb": "^3.1162.0",
+    "@aws-sdk/client-sns": "^3.1162.0",
+    "@aws-sdk/client-ssm": "^3.1162.0",
+    "@aws-sdk/lib-dynamodb": "^3.1162.0",
     "@types/aws-lambda": "^8.10.164",
     "@types/node": "^24.19.2",
     "esbuild": "^0.28.2",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
